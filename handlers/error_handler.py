@@ -129,7 +129,7 @@ class ErrorMessageView(discord.ui.View):
 
         except Exception as e:
             logger.error(f"❌ Ошибка автоисправления: {e}")
-            await interaction.edit_original_response(content="❌ Произошла ошибка при автоисправлении.")utton):
+            await interaction.edit_original_response(content="❌ Произошла ошибка при автоисправлении.")
         """Кнопка перепроверки заявки"""
         try:
             await interaction.response.send_message("🔄 Запускаю перепроверку заявки...", ephemeral=True)
