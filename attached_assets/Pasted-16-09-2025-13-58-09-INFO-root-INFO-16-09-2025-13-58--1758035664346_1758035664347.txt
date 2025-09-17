@@ -1,0 +1,46 @@
+16.09.2025 13:58:09 | INFO    | root | Логирование инициализировано: уровень=INFO
+16.09.2025 13:58:09 | INFO    | __main__ | ============================================================
+16.09.2025 13:58:09 | INFO    | __main__ | 🚀 ЗАПУСК DISCORD БОТА VLG
+16.09.2025 13:58:09 | INFO    | __main__ | ============================================================
+16.09.2025 13:58:10 | INFO    | cogs.roles | ✅ Roles модуль настроен
+16.09.2025 13:58:10 | INFO    | handlers.tickets | ✅ Persistent views зарегистрированы в tickets.py
+16.09.2025 13:58:10 | INFO    | __main__ | 📦 Загружено расширений: 9 успешно, 0 с ошибками
+16.09.2025 13:58:11 | INFO    | __main__ | 🔄 Синхронизировано команд: 25
+16.09.2025 13:58:11 | INFO    | __main__ | 🌐 Веб-сервер статуса запущен на порту 5000
+🌐 web_server: Запуск Flask на порту 5000
+ * Serving Flask app 'web_server'
+ * Debug mode: off
+16.09.2025 13:58:12 | WARNING | utils.db | ⚠️ База данных отключена, работаем без неё: Tenant or user not found
+16.09.2025 13:58:12 | INFO    | __main__ | ⚠️ База данных отключена, работаем без неё
+16.09.2025 13:58:12 | INFO    | utils.cache | 💾 Кэш: 0 записей
+16.09.2025 13:58:12 | INFO    | __main__ | 📚 База знаний: 16 фрагментов
+16.09.2025 13:58:15 | INFO    | __main__ | ============================================================
+16.09.2025 13:58:15 | INFO    | __main__ | 🎉 БОТ ГОТОВ К РАБОТЕ!
+16.09.2025 13:58:15 | INFO    | __main__ | ============================================================
+16.09.2025 13:58:15 | INFO    | __main__ | 🤖 Имя бота: VLG | Помощник#6027
+16.09.2025 13:58:15 | INFO    | __main__ | 🆔 ID бота: 1385027874313994340
+16.09.2025 13:58:15 | INFO    | __main__ | 🟢 Бот готов: гильдий=1, участников~=4058, latency=284 ms
+16.09.2025 13:58:15 | INFO    | utils.discord_logger | 🚀 Бот запущен: VLG | Помощник#6027
+16.09.2025 13:58:15 | INFO    | __main__ | ✅ Постоянные view (кнопки заявок) зарегистрированы
+16.09.2025 13:58:15 | INFO    | __main__ | ============================================================
+16.09.2025 13:58:15 | INFO    | __main__ | 🟢 БОТ ПОЛНОСТЬЮ ЗАПУЩЕН И ГОТОВ К РАБОТЕ
+16.09.2025 13:58:15 | INFO    | __main__ | ============================================================
+16.09.2025 13:58:15 | INFO    | __main__ | ⏱️ Время запуска: 5.31 c | ✅ Бот успешно запущен | Проблем выявлено: 0
+16.09.2025 13:58:15 | INFO    | cogs.application_system | ✅ ApplicationButton view добавлен как постоянный view
+16.09.2025 14:28:17 | INFO    | cogs.roles | 🎭 Команда /role: sulio пытается выдать роль 'Прохожий' пользователю elegia8497
+16.09.2025 14:28:18 | ERROR   | __main__ | ❌ Ошибка в команде /role: Command 'role' raised an exception: HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.
+16.09.2025 14:28:18 | ERROR   | __main__ | ❌ Критическая ошибка в обработчике ошибок slash-команд: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.
+16.09.2025 14:39:04 | INFO    | cogs.roles | 🎭 Команда /role: sulio пытается выдать роль 'Новичок' пользователю elegia8497
+16.09.2025 14:39:05 | ERROR   | __main__ | ❌ Ошибка в команде /role: Command 'role' raised an exception: HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.
+16.09.2025 14:39:05 | ERROR   | __main__ | ❌ Критическая ошибка в обработчике ошибок slash-команд: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.
+16.09.2025 14:41:32 | ERROR   | discord.ui.view | Ignoring exception in view <TicketActionView timeout=None children=2> for item <Button style=<ButtonStyle.success: 3> url=None disabled=False label='✅ Принять' emoji=None row=None sku_id=None>
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.10/site-packages/discord/ui/view.py", line 428, in _scheduled_task
+    allow = await item.interaction_check(interaction) and await self.interaction_check(interaction)
+  File "/home/runner/workspace/handlers/novichok_actions.py", line 364, in interaction_check
+    await interaction.response.send_message(
+  File "/home/runner/workspace/.pythonlibs/lib/python3.10/site-packages/discord/interactions.py", line 1004, in send_message
+    response = await adapter.create_interaction_response(
+  File "/home/runner/workspace/.pythonlibs/lib/python3.10/site-packages/discord/webhook/async_.py", line 226, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.

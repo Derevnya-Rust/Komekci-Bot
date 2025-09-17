@@ -1,0 +1,75 @@
+entrypoint = "bot.py"
+modules = ["python-3.10", "postgresql-16"]
+hidden = [".pythonlibs"]
+
+[nix]
+channel = "stable-24_05"
+packages = ["fontconfig", "ghostscript", "glib", "harfbuzz", "libsodium", "pango", "postgresql"]
+
+[deployment]
+run = ["python", "bot.py"]
+deploymentTarget = "gce"
+ignorePorts = true
+
+[deployment.port]
+exposed = false
+
+[workflows]
+runButton = "Run Bot"
+
+[[workflows.workflow]]
+name = "Run Bot"
+author = 42244692
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python bot.py"
+
+[[workflows.workflow]]
+name = "Run Bot"
+author = 42244692
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python bot.py"
+
+[[workflows.workflow]]
+name = "Run Bot"
+author = 42244692
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python bot.py"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Discord Bot"
+
+[[workflows.workflow]]
+name = "Discord Bot"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python bot.py"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[ports]]
+localPort = 5000
+
+[[ports]]
+localPort = 8000
+externalPort = 8000
+
+[agent]
+expertMode = true

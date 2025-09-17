@@ -1,0 +1,23 @@
+{
+  "enabled": false,
+  "channel_id": 1186254344820113409,
+  "start_time": "17:00",
+  "wipe_no": 194,
+  "last_pre_date": "",
+  "last_hour_date": "",
+  "last_minute_date": "",
+  "window_minutes": 5,
+  "panel_message_id": null,
+  "panel_channel_id": null,
+  "boosters_role_id": 1163502514105241750,
+  "boosters_channel_id": 1204546801991155822,
+  "last_thanks_ym": "2025-09",
+  "boosters_allowed_roles": [
+    1176935405195636856,
+    945469407944118362,
+    1208155640355229757,
+    1257813489595191296
+  ],
+  "boosters_realtime_enabled": true,
+  "boosters_realtime_channel_id": 1204546801991155822
+}

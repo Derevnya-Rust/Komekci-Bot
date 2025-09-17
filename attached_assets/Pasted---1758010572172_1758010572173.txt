@@ -1,0 +1,110 @@
+Я нашёл ошибки в текущем коде, из-за которых кнопки перестают работать после рестарта и ломается логика проверки ников. Исправь проект по шагам:
+
+🔧 Изменения по файлам
+1. bot.py
+
+Удали регистрацию persistent views с аргументами:
+
+bot.add_view(TicketActionView(0, ""))
+bot.add_view(RecheckApplicationView(0, ""))
+bot.add_view(NicknameMismatchFixView(0, "", "", ""))
+bot.add_view(ConfirmDeleteView(0,0))
+
+
+Зарегистрируй их правильно:
+
+bot.add_view(ApplicationButton())
+bot.add_view(DeleteApplicationView())
+bot.add_view(ReadyButtonView())
+bot.add_view(TicketActionView())
+bot.add_view(RecheckApplicationView())
+bot.add_view(NicknameMismatchFixView())
+bot.add_view(ConfirmDeleteView())
+
+
+Это нужно, чтобы persistent views работали после перезапуска.
+
+2. handlers/tickets.py
+
+Убедись, что все View имеют:
+
+timeout=None
+
+уникальный custom_id у кнопок
+
+все параметры (user_id, discord_nick, steam_nick) по умолчанию None
+
+Пример:
+
+class NicknameMismatchFixView(discord.ui.View):
+    def __init__(self, user_id: int = None, discord_nick: str = None, steam_nick: str = None, real_name: str = None):
+        super().__init__(timeout=None)
+        self.user_id = user_id
+        self.discord_nick = discord_nick
+        self.steam_nick = steam_nick
+        self.real_name = real_name
+
+
+Проверь вызовы .send(). Убери дублирование allowed_mentions. Используй только:
+
+await channel.send(content=msg, allowed_mentions=discord.AllowedMentions(users=True))
+
+3. cogs/application_system.py
+
+У кнопок: "Проверить заявку ещё раз", "Удалить заявку", "Перепроверить заявку", "Готово"
+добавь уникальные custom_id, например:
+
+custom_id="recheck_application_v4"
+custom_id="delete_application_v4"
+custom_id="ready_button_v4"
+
+
+В функциях, где очищается кэш Steam, импортируй local_steam_cache правильно:
+
+from handlers.tickets import local_steam_cache
+
+4. handlers/novichok.py
+
+В функции extract_steam_links() исправь баг: перед вызовом re.finditer проверь, что входящий параметр text — это строка. Если нет — преобразуй:
+
+if not isinstance(text, str):
+    text = str(text)
+
+5. handlers/novichok_actions.py
+
+Добавь отправку embed в канал 📂личные-дела (ID: 1226224193603895386) после одобрения заявки (через кнопку или /role).
+Формат:
+
+📝 Личное дело:
+👤 Игрок: @Western | Максим
+👮 Модератор: @Sulio | Сулейман
+📋 Метод принятия: Кнопка "Одобрить"
+Discord: Western | Максим
+Discord ID: 352921412148789268
+Аккаунт создан: 31.08.2017 21:03
+Steam URL: https://steamcommunity.com/id/polonezwest
+SteamID64: 76561199001250843
+Часы в Rust: 222
+📋 Детали принятия:
+Дата принятия: <текущая дата>
+Роль выдана: @Новичок
+
+6. handlers/steam_api.py
+
+Добавь функцию, которая конвертирует Steam vanity URL → SteamID64. Если ссылка в формате /id/username, вызывай ResolveVanityURL. Если уже steamid64, сохраняй напрямую.
+
+✅ Логика после исправлений
+
+Кнопки работают даже после рестарта.
+
+Ник игрока проверяется: если Discord != Steam → бот пишет предупреждение + кнопки.
+
+Зелёная кнопка → автоматическая замена ника → сообщение в заявку.
+
+Красная кнопка → модальное окно для ручного ввода.
+
+После одобрения заявки → отчёт в 📂личные-дела с SteamID64.
+
+Ошибок с allowed_mentions и TypeError: expected string or bytes-like object больше не будет.
+
+👉 Внеси все эти правки во все перечисленные файлы.
