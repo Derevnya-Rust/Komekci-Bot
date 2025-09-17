@@ -1,8 +1,5 @@
 name: CI
-on:
-  push:
-  pull_request:
-
+on: [push, pull_request]
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
