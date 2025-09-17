@@ -1,5 +1,5 @@
 entrypoint = "bot.py"
-modules = ["python-3.10", "postgresql-16"]
+modules = ["postgresql-16", "python-3.10", "python-3.11"]
 hidden = [".pythonlibs"]
 
 [nix]
