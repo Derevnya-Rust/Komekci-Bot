@@ -422,7 +422,7 @@ def run_web_server():
         )
     except OSError as e:
         if "Address already in use" in str(e):
-            print(f"⚠️ web_server: Порт 5000 уже занят, веб-сервер не запущен")
+            print("⚠️ web_server: Порт 5000 уже занят, веб-сервер не запущен")
         else:
             print(f"❌ web_server: Ошибка запуска веб-сервера на порту 5000: {e}")
     except Exception as e:
