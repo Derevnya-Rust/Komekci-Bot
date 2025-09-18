@@ -595,33 +595,33 @@ class TicketActionView(discord.ui.View):
  #               )
  #               await mod_channel.send(embed=mod_embed)
 
-            # Отправляем отчет в канал "Личные дела"
-            # personal_files_channel = guild.get_channel(
-            #     1226224193603895386
-            # )  # ID канала "Личные дела"
-            # logger.info(
-            #     f"🔍 Канал личных дел найден: {personal_files_channel.name if personal_files_channel else 'НЕ НАЙДЕН'}"
-            # )
+            Отправляем отчет в канал "Личные дела"
+            personal_files_channel = guild.get_channel(
+                1226224193603895386
+            )  # ID канала "Личные дела"
+            logger.info(
+                f"🔍 Канал личных дел найден: {personal_files_channel.name if personal_files_channel else 'НЕ НАЙДЕН'}"
+            )
 
-            # if personal_files_channel:
-            #     try:
-            #         await self.send_personal_file_report(
-            #             personal_files_channel, user, interaction.user, "Кнопка \"Одобрить\"", interaction.channel
-            #         )
-            #     except Exception as e:
-            #         logger.error(f"❌ Критическая ошибка отправки в Личные дела: {e}")
-            #         import traceback
-            #         logger.error(f"Traceback: {traceback.format_exc()}")
-            #         await log_error(
-            #             e,
-            #             f"❌ Критическая ошибка отправки в Личные дела для {user.display_name}",
-            #         )
-            # else:
-            #     logger.error(
-            #         f"❌ Канал Личные дела не найден (ID: 1226224193603895386)"
-            #     )
+            if personal_files_channel:
+                try:
+                    await self.send_personal_file_report(
+                        personal_files_channel, user, interaction.user, "Кнопка \"Одобрить\"", interaction.channel
+                    )
+                except Exception as e:
+                    logger.error(f"❌ Критическая ошибка отправки в Личные дела: {e}")
+                    import traceback
+                    logger.error(f"Traceback: {traceback.format_exc()}")
+                    await log_error(
+                        e,
+                        f"❌ Критическая ошибка отправки в Личные дела для {user.display_name}",
+                    )
+            else:
+                logger.error(
+                    f"❌ Канал Личные дела не найден (ID: 1226224193603895386)"
+                )
 
-            # Планируем автоматическое удаление канала через 1 час после одобрения
+            Планируем автоматическое удаление канала через 1 час после одобрения
             asyncio.create_task(
                 self._schedule_channel_deletion(
                     interaction.channel, user, interaction.user
@@ -722,7 +722,8 @@ class TicketActionView(discord.ui.View):
             await log_error(e, f"❌ Ошибка получения Steam URL для {user_id}")
             return None
 
-    async def send_personal_file_report(self, channel, user, moderator, method, ticket_channel):
+    async def send_personal_file_report(self, channel, user, moderator, method, ticket_channel):  
+        
         """Отправляет детальный отчёт в канал личных дел"""
         try:
             # Получаем Steam URL из различных источников
