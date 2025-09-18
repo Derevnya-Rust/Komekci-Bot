@@ -826,14 +826,32 @@ class TicketHandler(commands.Cog):
                     else:
                         real_name = "Ваше имя"  # fallback
 
-                # Проверяем, нужно ли включить детальное логирование для этого пользователя
-                if getattr(config, "DEBUG_NICKNAME_CHECKS", False) and "Western" in discord_nick:
-                    logger.info(f"🔍 DEBUG: Детальная проверка для Western:")
+                # Проверяем, нужно ли включить детальное логирование
+                if getattr(config, "DEBUG_NICKNAME_CHECKS", False):
+                    # Вычисляем очищенные варианты для логирования
+                    discord_left = discord_nick.split(' | ')[0].strip() if ' | ' in discord_nick else discord_nick.strip()
+                    steam_nick_clean = steam_nick.strip()
+                    
+                    # Убираем клановые приставки
+                    import re
+                    steam_without_clan = re.sub(r'^(VLG\.|VLG_|\[VLG\]|VLG)', '', steam_nick_clean, flags=re.IGNORECASE).strip()
+                    discord_without_clan = re.sub(r'^(VLG\.|VLG_|\[VLG\]|VLG)', '', discord_left, flags=re.IGNORECASE).strip()
+                    
+                    logger.info(f"🔍 DEBUG: Детальная проверка совпадения ников:")
                     logger.info(f"   Исходный Discord ник: '{discord_nick}'")
                     logger.info(f"   Исходный Steam ник: '{steam_nick}'")
-                    logger.info(f"   Discord очищенный: '{discord_name_clean}'")
-                    logger.info(f"   Steam очищенный: '{steam_name_clean}'")
-                    logger.info(f"   Совпадают ли: {discord_name_clean == steam_name_clean}")
+                    logger.info(f"   Discord левая часть: '{discord_left}'")
+                    logger.info(f"   Steam очищенный: '{steam_nick_clean}'")
+                    logger.info(f"   Discord без клана: '{discord_without_clan}'")
+                    logger.info(f"   Steam без клана: '{steam_without_clan}'")
+                    logger.info(f"   Точное совпадение: {discord_left.lower() == steam_nick_clean.lower()}")
+                    logger.info(f"   Совпадение без клана: {discord_without_clan.lower() == steam_without_clan.lower()}")
+                    
+                    # Проверка схожести
+                    from difflib import SequenceMatcher
+                    similarity = SequenceMatcher(None, discord_without_clan.lower(), steam_without_clan.lower()).ratio()
+                    logger.info(f"   Схожесть (0.0-1.0): {similarity:.3f}")
+                    logger.info(f"   Итоговое решение nick_match: {nick_match}")
 
                 if discord_name_clean != steam_name_clean:
                     logger.warning(f"❌ Ники не совпадают для {user.display_name}")

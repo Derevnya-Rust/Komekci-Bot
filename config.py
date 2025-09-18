@@ -89,6 +89,7 @@ class Config:
 
     # Debug settings
     DEBUG_NICKNAME_CHECKS: bool = True  # Включить подробные логи проверки ников
+    DEBUG_AI_MODERATION: bool = True    # Включить подробные логи AI модерации
 
     # Rate limiting
     STEAM_RATE_LIMIT_PER_SECOND: int = 1

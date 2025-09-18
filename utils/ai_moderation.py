@@ -254,7 +254,7 @@ async def llm_decide(full: str) -> NickCheckResult:
         full_prompt = f"{SYSTEM_PROMPT}\n\n{user_prompt}"
 
         # DEBUG: Логируем полный промпт
-        if getattr(config, "DEBUG_NICKNAME_CHECKS", False):
+        if getattr(config, "DEBUG_NICKNAME_CHECKS", False) or getattr(config, "DEBUG_AI_MODERATION", False):
             logger.info(f"🔍 DEBUG LLM: Полный промпт для '{full}':")
             logger.info(f"📝 PROMPT START ---")
             logger.info(full_prompt)
@@ -275,7 +275,7 @@ async def llm_decide(full: str) -> NickCheckResult:
             raw = await asyncio.wait_for(ask_openrouter(full_prompt), timeout=12.0)
 
         # DEBUG: Логируем сырой ответ LLM
-        if getattr(config, "DEBUG_NICKNAME_CHECKS", False):
+        if getattr(config, "DEBUG_NICKNAME_CHECKS", False) or getattr(config, "DEBUG_AI_MODERATION", False):
             logger.info(f"🤖 DEBUG LLM: Сырой ответ от {provider.upper()}:")
             logger.info(f"📤 RESPONSE START ---")
             logger.info(raw)
@@ -285,7 +285,7 @@ async def llm_decide(full: str) -> NickCheckResult:
         json_content = extract_json_from_response(raw)
         
         # DEBUG: Логируем извлечённый JSON
-        if getattr(config, "DEBUG_NICKNAME_CHECKS", False):
+        if getattr(config, "DEBUG_NICKNAME_CHECKS", False) or getattr(config, "DEBUG_AI_MODERATION", False):
             logger.info(f"🔧 DEBUG LLM: Извлечённый JSON контент:")
             logger.info(f"📋 JSON START ---")
             logger.info(json_content)
@@ -303,11 +303,12 @@ async def llm_decide(full: str) -> NickCheckResult:
             )
 
         # DEBUG: Логируем финальный результат решения
-        if getattr(config, "DEBUG_NICKNAME_CHECKS", False):
+        if getattr(config, "DEBUG_NICKNAME_CHECKS", False) or getattr(config, "DEBUG_AI_MODERATION", False):
             logger.info(f"✅ DEBUG LLM: Финальное решение для '{full}':")
             logger.info(f"   Одобрено: {bool(data.get('approve', False))}")
             logger.info(f"   Причины: {list(data.get('reasons', []))}")
             logger.info(f"   Исправление: {data.get('fixed_full')}")
+            logger.info(f"   Заметки пользователю: {data.get('notes_to_user', 'Нет')}")
 
         return NickCheckResult(
             bool(data.get("approve", False)),

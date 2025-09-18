@@ -610,7 +610,7 @@ class TicketActionView(discord.ui.View):
  #               )
  #               await mod_channel.send(embed=mod_embed)
 
-            Отправляем отчет в канал "Личные дела"
+            # Отправляем отчет в канал "Личные дела"
             personal_files_channel = guild.get_channel(
                 1226224193603895386
             )  # ID канала "Личные дела"
@@ -636,7 +636,7 @@ class TicketActionView(discord.ui.View):
                     f"❌ Канал Личные дела не найден (ID: 1226224193603895386)"
                 )
 
-            Планируем автоматическое удаление канала через 1 час после одобрения
+            # Планируем автоматическое удаление канала через 1 час после одобрения
             asyncio.create_task(
                 self._schedule_channel_deletion(
                     interaction.channel, user, interaction.user
