@@ -9,3 +9,13 @@ assets/
 *.log
 .pytest_cache/
 .coverage
+.env
+venv/
+__pycache__/
+*.pyc
+assets/
+logs/
+dist/
+build/
+*.log
+status.json
