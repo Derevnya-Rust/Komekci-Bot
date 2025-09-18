@@ -337,7 +337,7 @@ class NicknameRecheckView(discord.ui.View):
         """Повторно запускает логику проверки заявки"""
         try:
             # Имитируем вызов analyze_and_respond_to_application
-            # В реальном коде вам может потребоваться получить доступ к инстансу Cog
+            # В реальном коде вам может потребоваться доступ к инстансу Cog
             # Для простоты, здесь мы вызываем decide_nickname напрямую
             # FIX: await вызов проверки никнейма
             nick_result = await decide_nickname(member.display_name)
@@ -831,12 +831,12 @@ class TicketHandler(commands.Cog):
                     # Вычисляем очищенные варианты для логирования
                     discord_left = discord_nick.split(' | ')[0].strip() if ' | ' in discord_nick else discord_nick.strip()
                     steam_nick_clean = steam_nick.strip()
-                    
+
                     # Убираем клановые приставки
                     import re
                     steam_without_clan = re.sub(r'^(VLG\.|VLG_|\[VLG\]|VLG)', '', steam_nick_clean, flags=re.IGNORECASE).strip()
                     discord_without_clan = re.sub(r'^(VLG\.|VLG_|\[VLG\]|VLG)', '', discord_left, flags=re.IGNORECASE).strip()
-                    
+
                     logger.info(f"🔍 DEBUG: Детальная проверка совпадения ников:")
                     logger.info(f"   Исходный Discord ник: '{discord_nick}'")
                     logger.info(f"   Исходный Steam ник: '{steam_nick}'")
@@ -846,7 +846,7 @@ class TicketHandler(commands.Cog):
                     logger.info(f"   Steam без клана: '{steam_without_clan}'")
                     logger.info(f"   Точное совпадение: {discord_left.lower() == steam_nick_clean.lower()}")
                     logger.info(f"   Совпадение без клана: {discord_without_clan.lower() == steam_without_clan.lower()}")
-                    
+
                     # Проверка схожести
                     from difflib import SequenceMatcher
                     similarity = SequenceMatcher(None, discord_without_clan.lower(), steam_without_clan.lower()).ratio()
@@ -906,7 +906,7 @@ class TicketHandler(commands.Cog):
                     value="1. Правый клик на свой ник в Discord\n2. Выберите \"Изменить никнейм на сервере\"\n3. Введите ник в формате: `SteamNick | Имя`",
                     inline=False
                 )
-                
+
                 await safe_send_message(channel, embed=nickname_embed)
                 logger.warning(f"❌ Никнейм '{current_nick}' не содержит разделителя ' | '")
                 return
@@ -915,11 +915,11 @@ class TicketHandler(commands.Cog):
             if len(parts) != 2:
                 # КРИТИЧЕСКАЯ ОШИБКА: два или более разделителей " | "
                 steam_part = parts[0] if parts else ""
-                
+
                 # Попытка угадать правильное имя из последней части
                 suggested_name = parts[-1] if len(parts) > 1 else "Ваше_Имя"
                 suggested_nick = f"{steam_part} | {suggested_name}" if steam_part else f"SteamNick | {suggested_name}"
-                
+
                 nickname_embed = discord.Embed(
                     title="❌ Неправильный формат никнейма",
                     description=(
@@ -929,29 +929,35 @@ class TicketHandler(commands.Cog):
                     ),
                     color=0xFF0000
                 )
-                
+
                 nickname_embed.add_field(
                     name="🔧 Предлагаемое исправление:",
                     value=f"`{suggested_nick}`",
                     inline=False
                 )
-                
+
                 nickname_embed.add_field(
                     name="📋 Как исправить:",
                     value="1. Нажмите кнопку \"Исправить автоматически\" ниже\n2. Или исправьте вручную: ПКМ на ник → \"Изменить никнейм на сервере\"",
                     inline=False
                 )
-                
+
                 view = NicknameRecheckView(user.id, suggested_nick)
                 await safe_send_message(channel, embed=nickname_embed, view=view)
-                
+
                 logger.warning(f"❌ Никнейм '{current_nick}' содержит {len(parts)-1} разделителей, ожидался 1")
                 return
 
-            # Если базовый формат правильный, проверяем через AI модерацию
+            # ОБЯЗАТЕЛЬНАЯ AI проверка - ВСЕГДА вызываем LLM
+            logger.info(f"🤖 ОБЯЗАТЕЛЬНАЯ AI проверка никнейма: '{current_nick}'")
+
             try:
                 from utils.ai_moderation import decide_nickname
                 nick_result = await decide_nickname(current_nick)
+
+                logger.info(f"🤖 AI результат для '{current_nick}': approve={nick_result.approve}")
+                if nick_result.public_reasons:
+                    logger.info(f"🤖 AI причины отклонения: {nick_result.public_reasons}")
 
                 if not nick_result.approve:
                     # Никнейм не соответствует правилам - отправляем сообщение с исправлением
@@ -971,10 +977,19 @@ class TicketHandler(commands.Cog):
 
                     logger.info(f"⚠️ Никнейм отклонен AI: {current_nick} - {', '.join(public_reasons)}")
                     return # Останавливаем дальнейшую обработку
+                else:
+                    logger.info(f"✅ Никнейм одобрен AI: {current_nick}")
 
             except Exception as e:
-                logger.error(f"❌ Ошибка проверки никнейма через AI: {e}")
-                # Продолжаем обработку при ошибке AI
+                logger.error(f"❌ КРИТИЧЕСКАЯ ОШИБКА AI проверки никнейма '{current_nick}': {e}")
+                # При ошибке AI ОТКЛОНЯЕМ заявку
+                error_embed = discord.Embed(
+                    title="❌ Ошибка проверки никнейма",
+                    description="Произошла ошибка при автоматической проверке никнейма. Обратитесь к модератору.",
+                    color=0xFF0000
+                )
+                await safe_send_message(channel, embed=error_embed)
+                return
 
             await safe_send_message(
                 channel,
