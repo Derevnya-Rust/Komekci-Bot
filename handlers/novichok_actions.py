@@ -22,6 +22,21 @@ from utils.nickname_moderator import NicknameModerator
 from utils.decision import NickCheckResult
 from utils.logger import get_module_logger
 
+# --- Права на удаление заявки ---
+def _can_delete_ticket(interaction, ticket_owner_id: int | None) -> bool:
+    u = interaction.user
+    g = getattr(interaction, "guild", None)
+
+    is_owner = bool(g) and (u.id == g.owner_id)
+    is_citizen = bool(config.CITIZEN_ROLE_ID) and any(
+        getattr(r, "id", 0) == config.CITIZEN_ROLE_ID for r in getattr(u, "roles", [])
+    )
+    is_author = (ticket_owner_id is not None and u.id == ticket_owner_id)
+
+    return is_owner or is_citizen or is_author
+
+
+
 # Import SequenceMatcher and define helper function
 from difflib import SequenceMatcher
 
@@ -1141,6 +1156,7 @@ class PostApprovalView(discord.ui.View):
             return False
         return True
 
+    
     @discord.ui.button(
         label="🗑️ Удалить заявку",
         style=discord.ButtonStyle.danger,

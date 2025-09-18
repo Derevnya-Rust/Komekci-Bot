@@ -71,6 +71,10 @@ class Config:
     ADMINISTRATOR_ROLE_ID: int = 1178690166043963473  # Администратор
     OFFICER_ROLE_ID: int = 1178689858251997204  # Офицер
 
+    # Optional role IDs
+    CITIZEN_ROLE_ID: Optional[int] = int(os.getenv("CITIZEN_ROLE_ID", "0")) or None
+
+
     # Security settings
     SECURITY_ENABLED = True
     MAX_MESSAGE_LENGTH = 2000
