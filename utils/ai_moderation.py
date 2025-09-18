@@ -253,6 +253,13 @@ async def llm_decide(full: str) -> NickCheckResult:
         user_prompt = build_user_prompt(full)
         full_prompt = f"{SYSTEM_PROMPT}\n\n{user_prompt}"
 
+        # DEBUG: Логируем полный промпт
+        if getattr(config, "DEBUG_NICKNAME_CHECKS", False):
+            logger.info(f"🔍 DEBUG LLM: Полный промпт для '{full}':")
+            logger.info(f"📝 PROMPT START ---")
+            logger.info(full_prompt)
+            logger.info(f"📝 PROMPT END ---")
+
         # Применяем rate-limit
         _llm_rate_limit_sleep()
 
@@ -261,14 +268,29 @@ async def llm_decide(full: str) -> NickCheckResult:
 
         # Таймаут 12 секунд
         if provider == "groq":
-            logger.info(f"Используем Groq для проверки никнейма: {full}")
+            logger.info(f"🔍 DEBUG LLM: Используем Groq для проверки никнейма: {full}")
             raw = await asyncio.wait_for(ask_groq(full_prompt), timeout=12.0)
         else:
-            logger.info(f"Используем OpenRouter для проверки никнейма: {full}")
+            logger.info(f"🔍 DEBUG LLM: Используем OpenRouter для проверки никнейма: {full}")
             raw = await asyncio.wait_for(ask_openrouter(full_prompt), timeout=12.0)
+
+        # DEBUG: Логируем сырой ответ LLM
+        if getattr(config, "DEBUG_NICKNAME_CHECKS", False):
+            logger.info(f"🤖 DEBUG LLM: Сырой ответ от {provider.upper()}:")
+            logger.info(f"📤 RESPONSE START ---")
+            logger.info(raw)
+            logger.info(f"📤 RESPONSE END ---")
 
         # Извлекаем и парсим JSON
         json_content = extract_json_from_response(raw)
+        
+        # DEBUG: Логируем извлечённый JSON
+        if getattr(config, "DEBUG_NICKNAME_CHECKS", False):
+            logger.info(f"🔧 DEBUG LLM: Извлечённый JSON контент:")
+            logger.info(f"📋 JSON START ---")
+            logger.info(json_content)
+            logger.info(f"📋 JSON END ---")
+        
         try:
             data = json.loads(json_content)
         except json.JSONDecodeError as e:
@@ -279,6 +301,13 @@ async def llm_decide(full: str) -> NickCheckResult:
                 ["не удалось автоматически проверить—повторите"],
                 None
             )
+
+        # DEBUG: Логируем финальный результат решения
+        if getattr(config, "DEBUG_NICKNAME_CHECKS", False):
+            logger.info(f"✅ DEBUG LLM: Финальное решение для '{full}':")
+            logger.info(f"   Одобрено: {bool(data.get('approve', False))}")
+            logger.info(f"   Причины: {list(data.get('reasons', []))}")
+            logger.info(f"   Исправление: {data.get('fixed_full')}")
 
         return NickCheckResult(
             bool(data.get("approve", False)),

@@ -1575,6 +1575,24 @@ class TicketDeleteCancelView(discord.ui.View):
         self.deleter_id = deleter_id
         self.channel_id = channel_id
 
+    @discord.ui.button(label="❌ Отменить удаление", style=discord.ButtonStyle.danger, custom_id="cancel_delete_ticket")
+    async def cancel_delete(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Отменить удаление тикета"""
+        if interaction.user.id not in [self.ticket_owner_id, self.deleter_id]:
+            await interaction.response.send_message("❌ Только автор тикета или инициатор удаления может отменить.", ephemeral=True)
+            return
+
+        # Отменяем задачу удаления
+        if self.channel_id in active_deletion_tasks:
+            active_deletion_tasks[self.channel_id].cancel()
+            del active_deletion_tasks[self.channel_id]
+
+        await interaction.response.send_message("✅ Удаление тикета отменено.", ephemeral=True)
+        
+        # Удаляем кнопку
+        self.clear_items()
+        await interaction.edit_original_response(view=self)
+
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         """Проверяем права на отмену удаления"""
         user_roles = [role.name for role in interaction.user.roles]

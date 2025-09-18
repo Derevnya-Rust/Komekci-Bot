@@ -87,6 +87,9 @@ class Config:
     STEAM_CACHE_TTL: int = 300  # 5 minutes
     AI_CACHE_TTL: int = 300  # 5 minutes
 
+    # Debug settings
+    DEBUG_NICKNAME_CHECKS: bool = True  # Включить подробные логи проверки ников
+
     # Rate limiting
     STEAM_RATE_LIMIT_PER_SECOND: int = 1
     STEAM_RATE_LIMIT_PER_5MIN: int = 100

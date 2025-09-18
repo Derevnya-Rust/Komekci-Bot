@@ -826,26 +826,48 @@ class TicketHandler(commands.Cog):
                     else:
                         real_name = "Ваше имя"  # fallback
 
-                # Создаем простое текстовое сообщение
-                mismatch_message = (
-                    f"⚠️ **Discord ник у Вас \"{discord_nick}\", а в Steam указан \"{steam_nick}\". Вам помочь исправить?**\n\n"
-                    f"📋 **Текущая ситуация:**\n"
-                    f"• Discord: `{discord_nick}`\n"
-                    f"• Steam: `{steam_nick}`\n\n"
-                    f"💡 **Предлагаемое исправление:** `{steam_nick} | {real_name}`"
-                )
+                # Проверяем, нужно ли включить детальное логирование для этого пользователя
+                if getattr(config, "DEBUG_NICKNAME_CHECKS", False) and "Western" in discord_nick:
+                    logger.info(f"🔍 DEBUG: Детальная проверка для Western:")
+                    logger.info(f"   Исходный Discord ник: '{discord_nick}'")
+                    logger.info(f"   Исходный Steam ник: '{steam_nick}'")
+                    logger.info(f"   Discord очищенный: '{discord_name_clean}'")
+                    logger.info(f"   Steam очищенный: '{steam_name_clean}'")
+                    logger.info(f"   Совпадают ли: {discord_name_clean == steam_name_clean}")
 
-                # Создаем view с кнопками для исправления
-                nick_fix_view = NicknameMismatchFixView(user.id, discord_nick, steam_nick, real_name)
+                if discord_name_clean != steam_name_clean:
+                    logger.warning(f"❌ Ники не совпадают для {user.display_name}")
 
-                await safe_send_message(
-                    channel,
-                    mismatch_message,
-                    view=nick_fix_view
-                )
+                    # Отправляем кастомное сообщение о несовпадении ников
+                    mismatch_embed = discord.Embed(
+                        title="❌ Никнейм не соответствует Steam профилю",
+                        description=(
+                            f"**Ваш Discord ник:** `{discord_nick}`\n"
+                            f"**Ваш Steam ник:** `{steam_nick}`\n\n"
+                            "**Требования:**\n"
+                            "• Discord ник должен быть в формате: `SteamNick | Имя`\n"
+                            "• SteamNick должен совпадать с вашим ником в Steam\n"
+                            "• Имя должно быть на кириллице с заглавной буквы"
+                        ),
+                        color=0xFF0000
+                    )
 
-                logger.info(f"⚠️ Несовпадение никнеймов: Discord='{discord_nick}', Steam='{steam_nick}'. Отправлено сообщение с выбором.")
-                return # Останавливаем дальнейшую обработку, пока ник не будет исправлен
+                    mismatch_embed.add_field(
+                        name="🔧 Как исправить:",
+                        value=(
+                            "1. Нажмите на свой ник в Discord\n"
+                            "2. Выберите \"Изменить никнейм на сервере\"\n"
+                            f"3. Введите: `{steam_nick} | ВашеИмя`\n"
+                            "4. Нажмите кнопку \"Перепроверить\" ниже"
+                        ),
+                        inline=False
+                    )
+
+                    view = NicknameMismatchFixView(user.id, discord_nick, steam_nick, "")
+                    await safe_send_message(channel, embed=mismatch_embed, view=view)
+
+                    # ВАЖНО: возвращаемся, чтобы не продолжать проверку через AI
+                    return
 
 
             # Если никнеймы совпадают или были исправлены, проверяем формат никнейма
@@ -853,13 +875,13 @@ class TicketHandler(commands.Cog):
 
             # Проверяем формат Discord никнейма через AI модерацию
             from utils.ai_moderation import decide_nickname
-            
+
             current_nick = user.nick or user.display_name
             logger.info(f"🔍 Проверяю формат никнейма: {current_nick}")
-            
+
             try:
                 nick_result = await decide_nickname(current_nick)
-                
+
                 if not nick_result.approve:
                     # Никнейм не соответствует формату - отправляем сообщение с исправлением
                     public_reasons = nick_result.public_reasons or []
@@ -876,10 +898,10 @@ class TicketHandler(commands.Cog):
                         embed=nickname_embed,
                         view=view
                     )
-                    
+
                     logger.info(f"⚠️ Никнейм отклонен AI: {current_nick} - {', '.join(public_reasons)}")
                     return # Останавливаем дальнейшую обработку
-                    
+
             except Exception as e:
                 logger.error(f"❌ Ошибка проверки никнейма через AI: {e}")
                 # Продолжаем обработку при ошибке AI
