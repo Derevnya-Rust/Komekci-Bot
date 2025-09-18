@@ -1,5 +1,5 @@
 entrypoint = "bot.py"
-modules = ["postgresql-16", "python-3.10"]
+modules = ["python-3.10", "postgresql-16"]
 hidden = [".pythonlibs"]
 
 [nix]
@@ -7,7 +7,7 @@ channel = "stable-24_05"
 packages = ["fontconfig", "ghostscript", "glib", "harfbuzz", "libsodium", "pango", "postgresql"]
 
 [deployment]
-run = ["python", "bot.py"]
+run = ["python3.10", "bot.py"]
 deploymentTarget = "gce"
 ignorePorts = true
 
@@ -24,42 +24,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python bot.py"
-
-[[workflows.workflow]]
-name = "Run Bot"
-author = 42244692
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python bot.py"
-
-[[workflows.workflow]]
-name = "Run Bot"
-author = 42244692
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python bot.py"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Discord Bot"
-
-[[workflows.workflow]]
-name = "Discord Bot"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python bot.py"
+args = "python3.10 bot.py"
 
 [workflows.workflow.metadata]
 outputType = "console"
