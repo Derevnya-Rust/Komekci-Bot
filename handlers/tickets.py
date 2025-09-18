@@ -888,24 +888,76 @@ class TicketHandler(commands.Cog):
                     return
 
 
-            # Если никнеймы совпадают или были исправлены, проверяем формат никнейма
+            # Проверяем формат Discord никнейма (БАЗОВАЯ ПРОВЕРКА СНАЧАЛА)
             await asyncio.sleep(2)
-
-            # Проверяем формат Discord никнейма через AI модерацию
-            from utils.ai_moderation import decide_nickname
 
             current_nick = user.nick or user.display_name
             logger.info(f"🔍 Проверяю формат никнейма: {current_nick}")
 
+            # КРИТИЧЕСКИ ВАЖНО: Сначала базовые проверки формата
+            if " | " not in current_nick:
+                nickname_embed = discord.Embed(
+                    title="❌ Неправильный формат никнейма",
+                    description=f"**Ваш никнейм:** `{current_nick}`\n\n**Требуется формат:** `SteamNick | Имя`",
+                    color=0xFF0000
+                )
+                nickname_embed.add_field(
+                    name="📋 Как исправить:",
+                    value="1. Правый клик на свой ник в Discord\n2. Выберите \"Изменить никнейм на сервере\"\n3. Введите ник в формате: `SteamNick | Имя`",
+                    inline=False
+                )
+                
+                await safe_send_message(channel, embed=nickname_embed)
+                logger.warning(f"❌ Никнейм '{current_nick}' не содержит разделителя ' | '")
+                return
+
+            parts = current_nick.split(" | ")
+            if len(parts) != 2:
+                # КРИТИЧЕСКАЯ ОШИБКА: два или более разделителей " | "
+                steam_part = parts[0] if parts else ""
+                
+                # Попытка угадать правильное имя из последней части
+                suggested_name = parts[-1] if len(parts) > 1 else "Ваше_Имя"
+                suggested_nick = f"{steam_part} | {suggested_name}" if steam_part else f"SteamNick | {suggested_name}"
+                
+                nickname_embed = discord.Embed(
+                    title="❌ Неправильный формат никнейма",
+                    description=(
+                        f"**Ваш никнейм:** `{current_nick}`\n\n"
+                        f"**Проблема:** Найдено {len(parts)-1} разделителей \" | \", должен быть только один\n\n"
+                        f"**Требуется формат:** `SteamNick | Имя`"
+                    ),
+                    color=0xFF0000
+                )
+                
+                nickname_embed.add_field(
+                    name="🔧 Предлагаемое исправление:",
+                    value=f"`{suggested_nick}`",
+                    inline=False
+                )
+                
+                nickname_embed.add_field(
+                    name="📋 Как исправить:",
+                    value="1. Нажмите кнопку \"Исправить автоматически\" ниже\n2. Или исправьте вручную: ПКМ на ник → \"Изменить никнейм на сервере\"",
+                    inline=False
+                )
+                
+                view = NicknameRecheckView(user.id, suggested_nick)
+                await safe_send_message(channel, embed=nickname_embed, view=view)
+                
+                logger.warning(f"❌ Никнейм '{current_nick}' содержит {len(parts)-1} разделителей, ожидался 1")
+                return
+
+            # Если базовый формат правильный, проверяем через AI модерацию
             try:
+                from utils.ai_moderation import decide_nickname
                 nick_result = await decide_nickname(current_nick)
 
                 if not nick_result.approve:
-                    # Никнейм не соответствует формату - отправляем сообщение с исправлением
+                    # Никнейм не соответствует правилам - отправляем сообщение с исправлением
                     public_reasons = nick_result.public_reasons or []
                     fixed_suggestion = nick_result.fixed_full
 
-                    from handlers.tickets import NicknameRecheckView
                     view = NicknameRecheckView(user.id, fixed_suggestion)
                     nickname_embed = build_nick_reject_embed(
                         user, current_nick, public_reasons, fixed_suggestion
