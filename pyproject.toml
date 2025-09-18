@@ -7,7 +7,7 @@ authors = ["you@example.com"]
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
 py-cord = "^2.4.1"
-aiohttp = "^3.8.6"
+aiohttp = "^3.12.14"
 discord-py = "^2.5.2"
 markdown = "^3.8.2"
 weasyprint = "^65.1"
