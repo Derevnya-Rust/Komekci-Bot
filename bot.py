@@ -13,6 +13,7 @@ import os
 import time
 import traceback
 import contextlib
+import functools
 from datetime import datetime, timezone, timedelta
 from config import config
 from utils.logger import init_logging, setup_logger, get_error_count
@@ -37,6 +38,26 @@ def timed(section: str, logger):
         dt = (time.perf_counter() - t0) * 1000
         logger.error(f"❌ {section} — ошибка спустя {dt:.1f} ms")
         raise
+        
+# 🔹 Новый декоратор для асинхронных функций
+def timed_section(section: str):
+    """Декоратор для измерения времени выполнения async-функций"""
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            t0 = time.perf_counter()
+            try:
+                result = await func(*args, **kwargs)
+                dt = (time.perf_counter() - t0) * 1000
+                logger.debug(f"✅ {section} — готово за {dt:.1f} ms")
+                return result
+            except Exception:
+                dt = (time.perf_counter() - t0) * 1000
+                logger.error(f"❌ {section} — ошибка спустя {dt:.1f} ms")
+                raise
+        return wrapper
+    return decorator
+
 
 logger.info("=" * 60)
 logger.info("🚀 ЗАПУСК DISCORD БОТА VLG")
@@ -66,6 +87,15 @@ _sync_lock = asyncio.Lock()
 loaded = []
 failed = []
 
+@timed_section("Создание директорий")
+async def init_directories():
+    os.makedirs("data", exist_ok=True)
+    os.makedirs("logs", exist_ok=True)
+
+@timed_section("Валидация конфигурации")
+async def validate_config():
+    config.validate()
+
 async def load_extension_safe(ext: str):
     """Безопасная загрузка расширения с обработкой ошибок"""
     try:
@@ -76,10 +106,12 @@ async def load_extension_safe(ext: str):
         failed.append((ext, e))
         logger.error(f"❌ Ошибка загрузки расширения {ext}: {e}")
 
-
 async def setup_hook():
     """Хук настройки - вызывается после подготовки бота, но до входа в систему"""
     global _commands_synced
+
+    # Устанавливаем setup_hook
+    bot.setup_hook = setup_hook
 
     # Загрузка модуля для проверки никнеймов по правилам «SteamNick | Имя»
     async def main():
@@ -87,61 +119,46 @@ async def setup_hook():
             await bot.load_extension("cogs.ticket_handler")
             await bot.start(config.DISCORD_TOKEN)
     
-    # Создание необходимых директорий
-    with timed("Создание директорий", logger):
-        os.makedirs("data", exist_ok=True)
-        os.makedirs("logs", exist_ok=True)
+    # Последовательность инициализации
+    await init_directories()     # создание папок
+    await validate_config()      # проверка конфига
+    await load_extensions()      # загрузка всех расширений
+    await sync_commands()        # синхронизация команд
 
-    # Валидация конфигурации
-    with timed("Валидация конфигурации", logger):
-        config.validate()
 
-    # Загрузка всех расширений
-    extensions = [
-        "handlers.wipes",
-        "cogs.roles",
-        "cogs.ai",
-        "cogs.application_system",
-        "cogs.admin_panel",
-        "cogs.nickname_admin",
-        "cogs.nickname_checker",
-        "cogs.kb_sync",
-        "handlers.tickets",
-    ]
+    # 🔹 Функция загрузки всех расширений (cogs и handlers)
+    # Используется для подключения отдельных модулей бота
+    # Если какое-то расширение не загрузится — ошибка попадёт в список failed
+    @timed_section("Загрузка расширений")
+    async def load_extensions():
+        # Список всех расширений, которые должны быть подключены при старте бота
+        extensions = [
+            "handlers.wipes",        # обработчик вайпов (события сброса прогресса)
+            "cogs.roles",            # управление ролями на сервере
+            "cogs.ai",               # модуль с ИИ-функционалом
+            "cogs.application_system",  # система заявок (например, на вступление)
+            "cogs.admin_panel",      # админ-панель с командами управления
+            "cogs.nickname_admin",   # админский модуль для проверки ников
+            "cogs.nickname_checker", # автоматический проверщик ников
+            "cogs.kb_sync",          # синхронизация базы знаний
+            "handlers.tickets",      # система тикетов (заявки/репорты)
+        ]
 
-    for ext in extensions:
-        await load_extension_safe(ext)
+        # Перебираем все расширения и пытаемся их загрузить
+        for ext in extensions:
+            await load_extension_safe(ext)
 
-    # Итоговый отчет о загрузке расширений
-    logger.info(f"📦 Загружено расширений: {len(loaded)} успешно, {len(failed)} с ошибками")
+        # Итоговый отчёт в логах: сколько расширений загрузилось, а сколько с ошибками
+        logger.info(f"📦 Загружено расширений: {len(loaded)} успешно, {len(failed)} с ошибками.")
 
-    # Синхронизация slash-команд (только при необходимости)
-    async with _sync_lock:
-        if not _commands_synced:
-            try:
-                # Проверяем, нужна ли синхронизация (файл-маркер)
-                sync_needed = not os.path.exists("data/commands_synced.flag") or os.getenv("FORCE_SYNC_COMMANDS") == "true"
-                
-                if sync_needed:
-                    with timed("Синхронизация slash-команд", logger):
-                        synced = await asyncio.wait_for(bot.tree.sync(), timeout=30.0)
-                        _commands_synced = True
-                        logger.info(f"🔄 Синхронизировано команд: {len(synced)}")
-                        
-                        # Создаем файл-маркер
-                        with open("data/commands_synced.flag", "w") as f:
-                            f.write(f"synced_{len(synced)}_commands")
-                else:
-                    _commands_synced = True
-                    logger.info("⚡ Пропуск синхронизации команд (уже синхронизированы)")
-            except asyncio.TimeoutError:
-                logger.warning("⏰ Таймаут синхронизации команд (30с), продолжаем без синхронизации")
-            except Exception as e:
-                logger.error(f"❌ Ошибка синхронизации команд: {e}")
 
-    # Веб-сервер статуса
-    with timed("Запуск веб-сервера", logger):
-        start_web_server()
+
+    # Веб-сервер статуса (если включен в конфиге)
+    if config.ENABLE_WEB_SERVER:
+        with timed("Запуск веб-сервера", logger):
+            start_web_server()
+    else:
+        logger.info("🌐 Веб-сервер отключён (ENABLE_WEB_SERVER=False)")
 
     # Инициализация БД
     with timed("Инициализация БД", logger):
@@ -163,10 +180,6 @@ async def setup_hook():
             logger.info(f"📚 База знаний: {chunks_count} фрагментов")
         else:
             logger.info("📚 База знаний пуста")
-
-
-# Устанавливаем setup_hook
-bot.setup_hook = setup_hook
 
 
 def update_bot_status():

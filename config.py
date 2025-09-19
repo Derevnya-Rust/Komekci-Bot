@@ -17,6 +17,9 @@ class Config:
     OPENROUTER_API_KEY: Optional[str] = os.getenv("OPENROUTER_API_KEY")
     MODEL_ID: str = os.getenv("MODEL_ID", "meta-llama/llama-4-scout-17b-16e-instruct")
 
+    # Web server
+    ENABLE_WEB_SERVER: bool = os.getenv("ENABLE_WEB_SERVER", "false").lower() == "true"
+
     # Database (Supabase)
     DB_HOST: Optional[str] = os.getenv("DB_HOST")
     DB_PORT: Optional[str] = os.getenv("DB_PORT", "5432")

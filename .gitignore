@@ -19,3 +19,10 @@ dist/
 build/
 *.log
 status.json
+attached_assets/
+static/
+*.png
+*.jpg
+*.jpeg
+*.mp4
+
