@@ -81,6 +81,12 @@ async def setup_hook():
     """Хук настройки - вызывается после подготовки бота, но до входа в систему"""
     global _commands_synced
 
+    # Загрузка модуля для проверки никнеймов по правилам «SteamNick | Имя»
+    async def main():
+        async with bot:
+            await bot.load_extension("cogs.ticket_handler")
+            await bot.start(config.DISCORD_TOKEN)
+    
     # Создание необходимых директорий
     with timed("Создание директорий", logger):
         os.makedirs("data", exist_ok=True)
